@@ -439,6 +439,69 @@ server.tool(
   },
 );
 
+// Update issue comment tool - 新規追加！
+server.tool(
+  "update_issue_comment",
+  "Update a GitHub issue comment",
+  {
+    owner: z.string().describe("Repository owner"),
+    repo: z.string().describe("Repository name"),
+    commentId: z.string().describe("Comment ID to update"),
+    body: z.string().describe("New comment body"),
+  },
+  async ({ owner, repo, commentId, body }) => {
+    try {
+      const githubToken = process.env.GITHUB_TOKEN;
+      if (!githubToken) {
+        throw new Error("GITHUB_TOKEN environment variable is required");
+      }
+
+      const updateUrl = `${GITHUB_API_URL}/repos/${owner}/${repo}/issues/comments/${commentId}`;
+      const response = await fetch(updateUrl, {
+        method: "PATCH",
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${githubToken}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ body }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to update comment: ${response.status} - ${errorText}`,
+        );
+      }
+
+      const result = await response.json();
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Comment ${commentId} updated successfully`,
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${errorMessage}`,
+          },
+        ],
+        error: errorMessage,
+        isError: true,
+      };
+    }
+  },
+);
+
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
