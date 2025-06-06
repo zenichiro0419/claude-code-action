@@ -572,6 +572,50 @@ describe("generatePrompt", () => {
     expect(prompt).toContain("Create a PR](https://github.com/");
     expect(prompt).toContain("Reference to the original PR");
   });
+
+  test("should include correct comment ID in tool usage example", () => {
+    const envVars: PreparedContext = {
+      repository: "owner/repo",
+      claudeCommentId: "98765",
+      triggerPhrase: "@claude",
+      eventData: {
+        eventName: "issue_comment",
+        commentId: "67890",
+        isPR: false,
+        issueNumber: "123",
+        defaultBranch: "main",
+        claudeBranch: "claude/issue-123-20240101_120000",
+        commentBody: "@claude please fix this",
+      },
+    };
+
+    const prompt = generatePrompt(envVars, mockGitHubData);
+
+    // Check that the correct comment ID is used in the tool usage example
+    expect(prompt).toContain('"commentId": 98765');
+    expect(prompt).toContain("with comment_id: 98765");
+  });
+
+  test("should include correct comment ID for PR review comment", () => {
+    const envVars: PreparedContext = {
+      repository: "owner/repo",
+      claudeCommentId: "54321",
+      triggerPhrase: "@claude",
+      eventData: {
+        eventName: "pull_request_review_comment",
+        isPR: true,
+        prNumber: "456",
+        commentId: "12345",
+        commentBody: "@claude please review this",
+      },
+    };
+
+    const prompt = generatePrompt(envVars, mockGitHubData);
+
+    // For PR review comments, it should use the eventData.commentId if available, otherwise claudeCommentId
+    expect(prompt).toContain('"commentId": 12345');
+    expect(prompt).toContain("mcp__github_file_ops__update_pull_request_comment");
+  });
 });
 
 describe("getEventTypeAndContext", () => {
