@@ -487,7 +487,7 @@ server.tool(
         );
       }
 
-      const result = await response.json();
+      const result:any = await response.json();
       
       return {
         content: [
@@ -634,7 +634,7 @@ server.tool(
         );
       }
 
-      const result = await response.json();
+      const result:any = await response.json();
       
       return {
         content: [
@@ -720,7 +720,7 @@ server.tool(
         );
       }
 
-      const issues = await response.json();
+      const issues:any = await response.json();
       
       // Simplify the response
       const simplifiedIssues = issues.map((issue: any) => ({
